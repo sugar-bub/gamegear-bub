@@ -21,6 +21,7 @@ class GameGearCore extends Module with Core {
     val host = new HostV0()
     val input = new InputV0()
     val sdram = new SdramV0(chips = 1)
+    val cartridge = new CartridgePortV0()
   })
   bindExtModule("gamegear_core", io, Map("DISPLAY_DIVIDER" -> displayDivider))
 }

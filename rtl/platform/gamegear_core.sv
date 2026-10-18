@@ -22,7 +22,15 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
     input wire input_buttons_l,input_buttons_r,input_buttons_start,input_buttons_select,
     output wire sdram_clock,sdram_cke,sdram_cs,sdram_ras,sdram_cas,sdram_we,
     output wire [1:0] sdram_dqm,sdram_bank,output wire [12:0] sdram_address,
-    input wire [15:0] sdram_dataIn,output wire [15:0] sdram_dataOut,output wire sdram_dataDir);
+    input wire [15:0] sdram_dataIn,output wire [15:0] sdram_dataOut,output wire sdram_dataDir,
+    output wire cartridge_enabled, input wire cartridge_switch,
+    input wire [7:0] cartridge_bank0In, output wire [7:0] cartridge_bank0Out, output wire cartridge_bank0Dir,
+    input wire [7:0] cartridge_bank1In, output wire [7:0] cartridge_bank1Out, output wire cartridge_bank1Dir,
+    input wire [7:0] cartridge_bank2In, output wire [7:0] cartridge_bank2Out, output wire cartridge_bank2Dir,
+    input wire [3:0] cartridge_bank3In, output wire [3:0] cartridge_bank3Out, output wire cartridge_bank3Dir,
+    input wire cartridge_pin30In, output wire cartridge_pin30Out, output wire cartridge_pin30Dir,
+    input wire cartridge_pin31In, output wire cartridge_pin31Out, output wire cartridge_pin31Dir
+    );
     wire clock_pal;
     gg_clocks #(.DISPLAY_DIVIDER(DISPLAY_DIVIDER)) clocks(.clock_50m(clocks_clockIn50M),
         .pal_mode(clock_pal),
@@ -36,6 +44,12 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
     wire [24:0] address;
     wire [7:0] data_write,data_read;
     assign host_commandCore_request=1'b0;
+    assign cartridge_enabled = 1'b1;
+    assign cartridge_bank1Dir = 1'b1;  // GB A15..A8
+    assign cartridge_bank2Dir = 1'b1;  // GB A7..A0
+    assign cartridge_bank3Dir = 1'b1;  // /CE, /WR, /RD, /CLK
+    assign cartridge_pin30Dir = 1'b1;  // /RST
+    assign cartridge_pin31Dir = 1'b0;  // /GG
     gamegear_soc soc(.clk(clocks_clockOutSystem),.reset(system_reset),.clock_pal(clock_pal),
         .buttons({input_buttons_start,input_buttons_a,input_buttons_b,
                   input_buttons_right,input_buttons_left,input_buttons_down,input_buttons_up}),
@@ -56,7 +70,35 @@ module gamegear_core #(parameter integer DISPLAY_DIVIDER=38)(
         .viewport_y0(videoViewport_y0),.viewport_epoch(videoViewport_epoch),
         .viewport_frame_id(videoViewport_frameId),
         .viewport_system_sms(videoViewport_systemSms),.viewport_tv_pal(videoViewport_tvPal),
-        .audio_left(audio_left),.audio_right(audio_right));
+        .audio_left(audio_left),.audio_right(audio_right),
+        .cartridge_address({
+              cartridge_bank2Out[2],  // GG A15 -> GB A10
+              cartridge_bank2Out[7],  // GG A14 -> GB A15
+              cartridge_bank2Out[6],  // GG A13 -> GB A14
+              cartridge_bank1Out[0],  // GG A12 -> GB A0
+              cartridge_bank2Out[3],  // GG A11 -> GB A11
+              cartridge_bank2Out[1],  // GG A10 -> GB A9
+              cartridge_bank2Out[4],  // GG A9  -> GB A12
+              cartridge_bank2Out[5],  // GG A8  -> GB A13
+              cartridge_bank1Out[1],  // GG A7  -> GB A1
+              cartridge_bank1Out[2],  // GG A6  -> GB A2
+              cartridge_bank1Out[3],  // GG A5  -> GB A3
+              cartridge_bank1Out[4],  // GG A4  -> GB A4
+              cartridge_bank1Out[5],  // GG A3  -> GB A5
+              cartridge_bank1Out[6],  // GG A2  -> GB A6
+              cartridge_bank1Out[7],  // GG A1  -> GB A7
+              cartridge_bank2Out[0]   // GG A0  -> GB A8
+        }),
+        .cartridge_data_dir(cartridge_bank0Dir),
+        .cartridge_data_in(cartridge_bank0In),
+        .cartridge_data_out(cartridge_bank0Out),
+        .cartridge_cs(cartridge_bank3Out[0]),
+        .cartridge_rd(cartridge_bank3Out[1]),
+        .cartridge_wr(cartridge_bank3Out[2]),
+        .cartridge_ioreq(cartridge_bank3Out[3]),
+        .cartridge_rst(cartridge_pin30Out),
+        .cartridge_gg(cartridge_pin31In)
+        );
     gg_sdram memory(.clk(clocks_clockOutSystem),.reset(system_reset),
         .request(request),.write(write),.address(address),.data_write(data_write),
         .ready(ready),.done(done),.data_read(data_read),.initialized(initialized),

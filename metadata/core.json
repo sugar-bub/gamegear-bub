@@ -6,5 +6,9 @@
 	},
 	"bitstreams": [
 		{"target": "gamebub_rev4", "filename": "SegaCore-gamebub_rev4.bit"}
-	]
+	],
+	"hardware": {
+		"cartridge_selectable": true,
+		"cartridge_enable": "if_selected"
+	}
 }

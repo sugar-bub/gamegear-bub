@@ -20,7 +20,15 @@ module gamegear_soc #(parameter integer CLOCK_HZ=53691275,
     output wire [7:0] viewport_epoch,
     output wire [15:0] viewport_frame_id,
     output wire signed [15:0] audio_left,audio_right,
-    output wire clock_pal);
+    output wire clock_pal,
+    output wire [15:0] cartridge_address,
+    output wire cartridge_data_dir,
+    input wire [7:0] cartridge_data_in,
+    output wire [7:0] cartridge_data_out,
+    output wire cartridge_cs, cartridge_rd, cartridge_wr, cartridge_ioreq,
+    output wire cartridge_rst,
+    input wire cartridge_gg
+    );
     localparam M_IDLE=0,M_REG=1,M_ROM_REQUEST=2,M_ROM_WAIT=3,
                M_SAVE_WRITE=4,M_SAVE_ADDRESS=5,M_SAVE_WAIT=6,M_SAVE_CAPTURE=7,
                M_FINISH=8,M_DONE=9,M_WRAM_ADDRESS=10,M_WRAM_WAIT=11,M_WRAM_CAPTURE=12;
